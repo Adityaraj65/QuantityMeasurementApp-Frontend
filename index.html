@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantifyPro | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="brand">QUANTIFY<span>PRO</span></h1>
+            <div class="nav-links">
+                <button id="historyBtn" class="nav-link-btn">History</button>
+                <button id="navAuthBtn" class="auth-btn">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-area">
+        <div class="main-card">
+            <div class="category-bar">
+                <button class="cat-item active" data-type="LengthUnit">Length</button>
+                <button class="cat-item" data-type="VolumeUnit">Volume</button>
+                <button class="cat-item" data-type="WeightUnit">Weight</button>
+                <button class="cat-item" data-type="TemperatureUnit">Temp</button>
+            </div>
+
+            <div class="tab-bar">
+                <button class="tab-item active" data-op="compare">Compare</button>
+                <button class="tab-item" data-op="convert">Convert</button>
+                <button class="tab-item" data-op="arithmetic">Arithmetic</button>
+            </div>
+
+            <div class="calc-box">
+                <div class="input-row">
+                    <input type="number" id="val1" placeholder="0.00">
+                    <select id="unit1"></select>
+                </div>
+                
+                <div class="divider" id="opSymbol">VS</div>
+                
+                <div class="input-row" id="val2Container">
+                    <input type="number" id="val2" placeholder="0.00">
+                    <select id="unit2"></select>
+                </div>
+            </div>
+
+            <div id="mathSelect" class="math-row hidden">
+                <select id="mathOp">
+                    <option value="add">Add (+)</option>
+                    <option value="subtract">Subtract (-)</option>
+                    <option value="multiply">Multiply (×)</option>
+                    <option value="divide">Divide (÷)</option>
+                </select>
+            </div>
+
+            <button id="calcBtn" class="btn-primary">Calculate Now</button>
+            
+            <div id="result" class="result-well">Ready...</div>
+        </div>
+    </main>
+
+    <div id="historyOverlay" class="overlay hidden">
+        <div class="modal-card wide">
+            <button class="close-icon" onclick="document.getElementById('historyOverlay').classList.add('hidden')">×</button>
+            <h3>Recent Activity</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Value 1</th>
+                            <th>Value 2</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
