@@ -1,0 +1,33 @@
+<main class="auth-page">
+  <section class="auth-card">
+    <div class="auth-header">
+      <h2>{{ title }}</h2>
+      <p>{{ subtitle }}</p>
+    </div>
+
+    <form class="auth-form" (ngSubmit)="submit()">
+      <input
+        type="email"
+        name="email"
+        placeholder="Email Address"
+        class="form-input"
+        [(ngModel)]="email"
+      >
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        class="form-input"
+        [(ngModel)]="password"
+      >
+
+      <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+
+      <p class="toggle-text">
+        <span>{{ toggleLabel }}</span>
+        <button type="button" class="link-btn" (click)="toggleMode()">{{ toggleButtonLabel }}</button>
+      </p>
+      <a routerLink="/" class="back-link">&larr; Back to Dashboard</a>
+    </form>
+  </section>
+</main>

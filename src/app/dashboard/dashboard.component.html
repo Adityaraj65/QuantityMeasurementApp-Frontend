@@ -1,0 +1,111 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <h1 class="brand">QUANTITY<span>Measurement</span></h1>
+    <div class="nav-links">
+      <button type="button" class="nav-link-btn" (click)="openHistory()">History</button>
+      <button type="button" class="auth-btn" (click)="authAction()">
+        {{ authService.isLoggedIn ? 'Logout' : 'Login' }}
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="dashboard-area">
+  <section class="main-card">
+    <div class="category-bar">
+      @for (category of categories; track category.type) {
+        <button
+          type="button"
+          class="cat-item"
+          [class.active]="currentType === category.type"
+          (click)="selectCategory(category.type)"
+        >
+          {{ category.label }}
+        </button>
+      }
+    </div>
+
+    <div class="tab-bar">
+      @for (tab of tabs; track tab.op) {
+        <button
+          type="button"
+          class="tab-item"
+          [class.active]="currentOp === tab.op"
+          (click)="selectOperation(tab.op)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <div class="calc-box">
+      <div class="input-row">
+        <input type="number" placeholder="0.00" [(ngModel)]="value1">
+        <select [(ngModel)]="unit1">
+          @for (unit of units; track unit) {
+            <option [value]="unit">{{ unit }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="divider">{{ opSymbol }}</div>
+
+      <div class="input-row">
+        @if (currentOp !== 'convert') {
+          <input type="number" placeholder="0.00" [(ngModel)]="value2">
+        }
+        <select [(ngModel)]="unit2">
+          @for (unit of units; track unit) {
+            <option [value]="unit">{{ unit }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (currentOp === 'arithmetic') {
+      <div class="math-row">
+        <select [(ngModel)]="mathOp">
+          <option value="add">Add (+)</option>
+          <option value="subtract">Subtract (-)</option>
+          <option value="multiply">Multiply (x)</option>
+          <option value="divide">Divide (/)</option>
+        </select>
+      </div>
+    }
+
+    <button type="button" class="btn-primary" (click)="calculate()">Calculate Now</button>
+
+    <div class="result-well">{{ result }}</div>
+  </section>
+</main>
+
+@if (isHistoryOpen) {
+  <div class="overlay">
+    <section class="modal-card wide">
+      <button type="button" class="close-icon" (click)="closeHistory()">x</button>
+      <h3>Recent Activity</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Value 1</th>
+              <th>Value 2</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of historyItems; track $index) {
+              <tr>
+                <td><strong>{{ item.operation }}</strong></td>
+                <td>{{ item.thisValue }}</td>
+                <td>{{ item.operation === 'CONVERT' ? '-' : item.thatValue }}</td>
+                <td>{{ formatHistoryResult(item) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}
