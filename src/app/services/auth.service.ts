@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
 
-const API_URL = 'http://localhost:8080/auth';
+const API_URL = 'https://quantitymeasurementapp-production-4cf8.up.railway.app/auth';
 
 type AuthResponse = {
   token?: string;

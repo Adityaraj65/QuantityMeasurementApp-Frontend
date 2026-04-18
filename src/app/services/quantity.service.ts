@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
-const API_BASE = 'http://localhost:8080/api/v1/quantities';
+const API_BASE = 'https://quantitymeasurementapp-production-4cf8.up.railway.app/api/v1/quantities';
 
 export type MeasurementType = 'LengthUnit' | 'VolumeUnit' | 'WeightUnit' | 'TemperatureUnit';
 export type Operation = 'compare' | 'convert' | 'arithmetic';
