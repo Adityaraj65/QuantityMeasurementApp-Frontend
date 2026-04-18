@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -54,7 +54,8 @@ export class DashboardComponent {
   constructor(
     public readonly authService: AuthService,
     private readonly quantityService: QuantityService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   get units(): string[] {
@@ -89,7 +90,9 @@ export class DashboardComponent {
       return;
     }
 
-    const endpoint = this.currentOp === 'arithmetic' ? this.mathOp : this.currentOp;
+    const operation = this.currentOp;
+    const targetUnit = this.unit2;
+    const endpoint = operation === 'arithmetic' ? this.mathOp : operation;
     const payload = {
       firstQuantity: {
         value: this.value1,
@@ -98,25 +101,38 @@ export class DashboardComponent {
       },
       secondQuantity: {
         value: this.value2 ?? 0,
-        unit: this.unit2,
+        unit: targetUnit,
         measurementType: this.currentType
       },
-      targetUnit: this.unit2
+      targetUnit
     };
+
+    this.result = 'Calculating...';
+    this.cdr.detectChanges();
 
     this.quantityService.calculate(endpoint, payload).subscribe({
       next: (data) => {
-        if (this.currentOp === 'compare') {
-          this.result = data.resultString === 'true' ? 'MATCH' : 'NO MATCH';
+        if (operation === 'compare') {
+          this.result = this.isMatch(data.resultString) ? 'MATCH' : 'NO MATCH';
+          this.cdr.detectChanges();
           return;
         }
 
-        const resultValue = data.resultValue ?? 0;
-        this.result = `${resultValue.toFixed(2)} ${this.unit2}`;
+        if (typeof data.resultValue !== 'number') {
+          console.error('Calculation response is missing resultValue:', data);
+          this.result = 'Error: Backend response is missing resultValue';
+          this.cdr.detectChanges();
+          return;
+        }
+
+        const resultValue = data.resultValue;
+        this.result = `${resultValue.toFixed(2)} ${targetUnit}`;
+        this.cdr.detectChanges();
       },
       error: (error: Error) => {
         console.error(error);
         this.result = `Error: ${error.message}`;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -158,5 +174,9 @@ export class DashboardComponent {
     }
 
     return typeof item.resultValue === 'number' ? item.resultValue.toFixed(2) : '';
+  }
+
+  private isMatch(result: string | undefined): boolean {
+    return result?.toLowerCase() === 'true' || result?.toUpperCase() === 'MATCH';
   }
 }

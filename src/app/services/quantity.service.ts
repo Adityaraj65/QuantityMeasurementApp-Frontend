@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, Observable, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
 const API_BASE = 'http://localhost:8080/api/v1/quantities';
@@ -36,6 +36,14 @@ export interface QuantityResult {
   errorMessage?: string;
 }
 
+type QuantityResponse = QuantityResult & {
+  result?: number;
+  value?: number;
+  ResultValue?: number;
+  result_value?: number;
+  message?: string;
+};
+
 export interface HistoryItem {
   operation: string;
   thisValue: string | number;
@@ -52,9 +60,12 @@ export class QuantityService {
   ) {}
 
   calculate(endpoint: Operation | MathOperation, payload: QuantityPayload): Observable<QuantityResult> {
-    return this.http.post<QuantityResult>(`${API_BASE}/${endpoint}`, payload, {
+    return this.http.post<QuantityResponse>(`${API_BASE}/${endpoint}`, payload, {
       headers: this.headers()
-    }).pipe(catchError((error) => this.handleError(error, 'Calculation failed')));
+    }).pipe(
+      map((response) => this.normalizeResult(response)),
+      catchError((error) => this.handleError(error, 'Calculation failed'))
+    );
   }
 
   history(type: MeasurementType): Observable<HistoryItem[]> {
@@ -74,7 +85,27 @@ export class QuantityService {
     return headers;
   }
 
+  private normalizeResult(response: QuantityResponse): QuantityResult {
+    const resultValue = response.resultValue
+      ?? response.result
+      ?? response.value
+      ?? response.ResultValue
+      ?? response.result_value;
+
+    return {
+      ...response,
+      resultString: response.resultString ?? response.message,
+      resultValue
+    };
+  }
+
   private handleError(error: HttpErrorResponse, fallback: string): Observable<never> {
+    if (error.status === 0) {
+      return throwError(() => new Error(
+        'Network/CORS error: the browser could not read the API response. Check that the Gateway allows this Angular origin and the Authorization header.'
+      ));
+    }
+
     const apiMessage = error.error?.errorMessage;
     const textMessage = typeof error.error === 'string' ? error.error : undefined;
     return throwError(() => new Error(apiMessage || textMessage || fallback));

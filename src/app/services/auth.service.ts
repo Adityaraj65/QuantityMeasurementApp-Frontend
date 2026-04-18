@@ -11,9 +11,10 @@ export class AuthService {
   login(email: string, password: string): Observable<string> {
     return this.request('/login', email, password).pipe(
       map((token) => {
-        localStorage.setItem('token', token);
+        const jwt = this.normalizeToken(token);
+        localStorage.setItem('token', jwt);
         localStorage.setItem('userEmail', email);
-        return token;
+        return jwt;
       })
     );
   }
@@ -27,7 +28,8 @@ export class AuthService {
   }
 
   get token(): string | null {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    return token ? this.normalizeToken(token) : null;
   }
 
   get isLoggedIn(): boolean {
@@ -43,5 +45,9 @@ export class AuthService {
         return throwError(() => new Error(message));
       })
     );
+  }
+
+  private normalizeToken(token: string): string {
+    return token.trim().replace(/^Bearer\s+/i, '').replace(/^"|"$/g, '');
   }
 }
