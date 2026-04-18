@@ -48,6 +48,8 @@ export class DashboardComponent {
   unit1 = UNITS.LengthUnit[0];
   unit2 = UNITS.LengthUnit[0];
   result = 'Ready...';
+  resultValue: string | null = null;
+  resultUnit: string | null | undefined = null;
   historyItems: HistoryItem[] = [];
   isHistoryOpen = false;
 
@@ -74,6 +76,10 @@ export class DashboardComponent {
     return 'VS';
   }
 
+  get resultLabel(): string {
+    return this.resultUnit ? `Result in ${this.resultUnit}` : 'Result';
+  }
+
   selectCategory(type: MeasurementType): void {
     this.currentType = type;
     this.unit1 = this.units[0];
@@ -86,17 +92,18 @@ export class DashboardComponent {
 
   calculate(): void {
     if (this.value1 === null || Number.isNaN(this.value1)) {
-      this.result = 'Enter a value first!';
+      this.showResultMessage('Enter a value first!');
       return;
     }
 
     const operation = this.currentOp;
-    const targetUnit = this.unit2;
+    const firstUnit = this.unit1.toUpperCase();
+    const targetUnit = this.unit2.toUpperCase();
     const endpoint = operation === 'arithmetic' ? this.mathOp : operation;
     const payload = {
       firstQuantity: {
         value: this.value1,
-        unit: this.unit1,
+        unit: firstUnit,
         measurementType: this.currentType
       },
       secondQuantity: {
@@ -107,31 +114,33 @@ export class DashboardComponent {
       targetUnit
     };
 
-    this.result = 'Calculating...';
+    this.showResultMessage('Calculating...');
     this.cdr.detectChanges();
 
     this.quantityService.calculate(endpoint, payload).subscribe({
       next: (data) => {
         if (operation === 'compare') {
-          this.result = this.isMatch(data.resultString) ? 'MATCH' : 'NO MATCH';
+          this.showResultMessage(this.isMatch(data.resultString) ? 'MATCH' : 'NO MATCH');
           this.cdr.detectChanges();
           return;
         }
 
         if (typeof data.resultValue !== 'number') {
           console.error('Calculation response is missing resultValue:', data);
-          this.result = 'Error: Backend response is missing resultValue';
+          this.showResultMessage('Cannot perform operation now. Please try again later.');
           this.cdr.detectChanges();
           return;
         }
 
         const resultValue = data.resultValue;
-        this.result = `${resultValue.toFixed(2)} ${targetUnit}`;
+        this.result = '';
+        this.resultValue = resultValue.toFixed(2);
+        this.resultUnit = data.resultUnit;
         this.cdr.detectChanges();
       },
       error: (error: Error) => {
         console.error(error);
-        this.result = `Error: ${error.message}`;
+        this.showResultMessage(error.message || 'Cannot perform operation now. Please try again later.');
         this.cdr.detectChanges();
       }
     });
@@ -149,7 +158,7 @@ export class DashboardComponent {
         this.historyItems = history;
       },
       error: () => {
-        alert('Could not load history. Session may have expired.');
+        alert('Cannot load history now. Please try again later.');
       }
     });
   }
@@ -178,5 +187,11 @@ export class DashboardComponent {
 
   private isMatch(result: string | undefined): boolean {
     return result?.toLowerCase() === 'true' || result?.toUpperCase() === 'MATCH';
+  }
+
+  private showResultMessage(message: string): void {
+    this.result = message;
+    this.resultValue = null;
+    this.resultUnit = null;
   }
 }

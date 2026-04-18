@@ -75,7 +75,14 @@
 
     <button type="button" class="btn-primary" (click)="calculate()">Calculate Now</button>
 
-    <div class="result-well">{{ result }}</div>
+    <div class="result-well">
+      <span class="result-label">{{ resultLabel }}</span>
+      @if (resultValue !== null && resultUnit) {
+        <span class="result-output">{{ resultValue }} {{ resultUnit }}</span>
+      } @else {
+        <span class="result-output">{{ result }}</span>
+      }
+    </div>
   </section>
 </main>
 

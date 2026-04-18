@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -12,10 +12,14 @@ export class AuthComponent {
   email = '';
   password = '';
   isLogin = true;
+  message = '';
+  isError = false;
+  isSubmitting = false;
 
   constructor(
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   get title(): string {
@@ -40,13 +44,21 @@ export class AuthComponent {
 
   toggleMode(): void {
     this.isLogin = !this.isLogin;
+    this.message = '';
+    this.isError = false;
   }
 
   submit(): void {
+    if (this.isSubmitting) {
+      return;
+    }
+
     const email = this.email.trim();
+    this.message = '';
+    this.isError = false;
 
     if (!email || !this.password) {
-      alert('Please enter email and password.');
+      this.showError('Please enter email and password.');
       return;
     }
 
@@ -54,20 +66,39 @@ export class AuthComponent {
       ? this.authService.login(email, this.password)
       : this.authService.register(email, this.password);
 
+    this.isSubmitting = true;
+    this.message = this.isLogin ? 'Logging in...' : 'Creating your account...';
+    this.isError = false;
+    this.cdr.detectChanges();
+
     request.subscribe({
       next: () => {
+        this.isSubmitting = false;
         if (this.isLogin) {
           void this.router.navigateByUrl('/');
           return;
         }
 
-        alert('Registration Successful! Please Login.');
         this.toggleMode();
+        this.showSuccess('Registration successful. Please login.');
       },
       error: (error: Error) => {
+        this.isSubmitting = false;
         console.error('Auth Error:', error);
-        alert(error.message || 'Server connection failed.');
+        this.showError(error.message || 'Something went wrong. Please try again.');
       }
     });
+  }
+
+  private showError(message: string): void {
+    this.message = message;
+    this.isError = true;
+    this.cdr.detectChanges();
+  }
+
+  private showSuccess(message: string): void {
+    this.message = message;
+    this.isError = false;
+    this.cdr.detectChanges();
   }
 }

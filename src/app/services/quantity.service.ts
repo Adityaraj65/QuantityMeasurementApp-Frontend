@@ -33,6 +33,7 @@ export interface QuantityPayload {
 export interface QuantityResult {
   resultString?: string;
   resultValue?: number;
+  resultUnit?: string;
   errorMessage?: string;
 }
 
@@ -60,26 +61,49 @@ export class QuantityService {
   ) {}
 
   calculate(endpoint: Operation | MathOperation, payload: QuantityPayload): Observable<QuantityResult> {
+    const headers = this.headers();
+
+    const invalidFields = this.findInvalidPayloadFields(payload);
+
+    if (invalidFields.length > 0) {
+      console.error('Quantity request has missing fields:', invalidFields, payload);
+      return throwError(() => new Error('Please fill all required quantity fields before calculating.'));
+    }
+
+    console.log('Quantity request payload:', payload);
+
     return this.http.post<QuantityResponse>(`${API_BASE}/${endpoint}`, payload, {
-      headers: this.headers()
+      headers
     }).pipe(
       map((response) => this.normalizeResult(response)),
-      catchError((error) => this.handleError(error, 'Calculation failed'))
+      catchError((error) => this.handleError(error, 'Cannot perform operation now. Please try again later.'))
     );
   }
 
   history(type: MeasurementType): Observable<HistoryItem[]> {
+    const headers = this.headers();
+
+    if (!headers.has('user-email')) {
+      console.error('History request is missing required user-email header.');
+      return throwError(() => new Error('Please login again before viewing history.'));
+    }
+
     return this.http.get<HistoryItem[]>(`${API_BASE}/history/type/${type}`, {
-      headers: this.headers()
-    }).pipe(catchError((error) => this.handleError(error, 'Could not load history')));
+      headers
+    }).pipe(catchError((error) => this.handleError(error, 'Cannot load history now. Please try again later.')));
   }
 
   private headers(): HttpHeaders {
     const token = this.authService.token;
+    const userEmail = this.authService.userEmail;
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    if (userEmail) {
+      headers = headers.set('user-email', userEmail);
     }
 
     return headers;
@@ -91,23 +115,60 @@ export class QuantityService {
       ?? response.value
       ?? response.ResultValue
       ?? response.result_value;
+    const resultUnit = response.resultUnit;
 
     return {
       ...response,
       resultString: response.resultString ?? response.message,
-      resultValue
+      resultValue,
+      resultUnit
     };
   }
 
   private handleError(error: HttpErrorResponse, fallback: string): Observable<never> {
-    if (error.status === 0) {
-      return throwError(() => new Error(
-        'Network/CORS error: the browser could not read the API response. Check that the Gateway allows this Angular origin and the Authorization header.'
-      ));
+    console.error('Quantity API error:', error);
+    return throwError(() => new Error(fallback));
+  }
+
+  private findInvalidPayloadFields(payload: QuantityPayload): string[] {
+    const invalidFields: string[] = [];
+
+    if (
+      payload.firstQuantity.value === null
+      || payload.firstQuantity.value === undefined
+      || Number.isNaN(payload.firstQuantity.value)
+    ) {
+      invalidFields.push('firstQuantity.value');
     }
 
-    const apiMessage = error.error?.errorMessage;
-    const textMessage = typeof error.error === 'string' ? error.error : undefined;
-    return throwError(() => new Error(apiMessage || textMessage || fallback));
+    if (!payload.firstQuantity.unit) {
+      invalidFields.push('firstQuantity.unit');
+    }
+
+    if (!payload.firstQuantity.measurementType) {
+      invalidFields.push('firstQuantity.measurementType');
+    }
+
+    if (
+      payload.secondQuantity.value === null
+      || payload.secondQuantity.value === undefined
+      || Number.isNaN(payload.secondQuantity.value)
+    ) {
+      invalidFields.push('secondQuantity.value');
+    }
+
+    if (!payload.secondQuantity.unit) {
+      invalidFields.push('secondQuantity.unit');
+    }
+
+    if (!payload.secondQuantity.measurementType) {
+      invalidFields.push('secondQuantity.measurementType');
+    }
+
+    if (!payload.targetUnit) {
+      invalidFields.push('targetUnit');
+    }
+
+    return invalidFields;
   }
 }

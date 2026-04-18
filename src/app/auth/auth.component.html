@@ -21,7 +21,13 @@
         [(ngModel)]="password"
       >
 
-      <button type="submit" class="btn-primary">{{ submitLabel }}</button>
+      @if (message) {
+        <p class="form-message" [class.error]="isError">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Please wait...' : submitLabel }}
+      </button>
 
       <p class="toggle-text">
         <span>{{ toggleLabel }}</span>
