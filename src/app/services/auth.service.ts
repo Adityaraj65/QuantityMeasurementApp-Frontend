@@ -1,8 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-const API_URL = 'https://quantitymeasurementapp-production-4cf8.up.railway.app/auth';
+const API_URL = `${environment.apiUrl}/auth`;
 
 type AuthResponse = {
   token?: string;
@@ -55,7 +56,10 @@ export class AuthService {
   }
 
   private request(endpoint: '/login' | '/register', email: string, password: string): Observable<string | AuthResponse> {
-    return this.http.post(`${API_URL}${endpoint}`, { email, password }, { responseType: 'text' }).pipe(
+    return this.http.post(`${API_URL}${endpoint}`, { email, password }, { 
+      responseType: 'text',
+      withCredentials: true 
+    }).pipe(
       map((response) => this.parseResponse(response)),
       catchError((error: HttpErrorResponse) => {
         console.error('Auth API error:', error);

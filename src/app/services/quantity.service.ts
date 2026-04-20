@@ -2,8 +2,9 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
-const API_BASE = 'https://quantitymeasurementapp-production-4cf8.up.railway.app/api/v1/quantities';
+const API_BASE = `${environment.apiUrl}/api/v1/quantities`;
 
 export type MeasurementType = 'LengthUnit' | 'VolumeUnit' | 'WeightUnit' | 'TemperatureUnit';
 export type Operation = 'compare' | 'convert' | 'arithmetic';
@@ -73,7 +74,8 @@ export class QuantityService {
     console.log('Quantity request payload:', payload);
 
     return this.http.post<QuantityResponse>(`${API_BASE}/${endpoint}`, payload, {
-      headers
+      headers,
+      withCredentials: true
     }).pipe(
       map((response) => this.normalizeResult(response)),
       catchError((error) => this.handleError(error, 'Cannot perform operation now. Please try again later.'))
@@ -89,7 +91,8 @@ export class QuantityService {
     }
 
     return this.http.get<HistoryItem[]>(`${API_BASE}/history/type/${type}`, {
-      headers
+      headers,
+      withCredentials: true
     }).pipe(catchError((error) => this.handleError(error, 'Cannot load history now. Please try again later.')));
   }
 
